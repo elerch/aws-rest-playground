@@ -1,0 +1,2 @@
+#!/bin/sh
+echo $(date -uIs |tr -d ':'|tr -d '-'|cut -f 1 -d + )Z
