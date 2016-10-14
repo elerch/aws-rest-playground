@@ -1,0 +1,48 @@
+#!/bin/bash
+
+getCreds="./get-creds"
+getDefaultRegion="./get-default-region"
+
+function hmac_sha256 {
+  key="$1"
+  data="$2"
+  echo -n "$data" | openssl dgst -sha256 -mac HMAC -macopt "$key" | sed 's/^.* //'
+}
+function show_help {
+  echo 'signing_key -s servicename [-r region] [-k secret key] [-d date] [-h]'
+}
+
+while getopts "h?srkd:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    s) service=$OPTARG
+        ;;
+    r) region=$OPTARG
+        ;;
+    k) secret=$OPTARG
+        ;;
+    d) date=$OPTARG
+        ;;
+    esac
+done
+
+if [ -z ${service+x} ]; then
+  echo "error: service parameter required"
+  show_help
+  exit 1
+fi
+
+secret=${secret:-$($getCreds |fgrep secret|cut -d '=' -f 2 |tr -d ' ')}
+date=${date:-$(date -I |tr -d '-')}
+region=${region:-$($getDefaultRegion)}
+
+# Four-step signing key calculation
+dateKey=$(hmac_sha256 key:"AWS4$secret" $date)
+dateRegionKey=$(hmac_sha256 hexkey:$dateKey $region)
+dateRegionServiceKey=$(hmac_sha256 hexkey:$dateRegionKey $service)
+signingKey=$(hmac_sha256 hexkey:$dateRegionServiceKey "aws4_request")
+
+echo $signingKey
