@@ -1,0 +1,2 @@
+#!/bin/sh
+fgrep -A 2 ${1:-default} $HOME/.aws/credentials | tail -n 2
