@@ -12,7 +12,7 @@ function show_help {
   echo 'signing_key -s servicename [-r region] [-k secret key] [-d date] [-h]'
 }
 
-while getopts "h?srkd:" opt; do
+while getopts "h?s:r:k:d:" opt; do
     case "$opt" in
     h|\?)
         show_help
