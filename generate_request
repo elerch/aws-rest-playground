@@ -1,0 +1,93 @@
+#!/bin/bash
+
+function show_help {
+  echo "generate_request [-m HTTP Method] [-q Query String] [-u URL] [-n] [-p]"
+  echo "  -n will direct the script not to prompt for missing values"
+  echo "  -h can be used as many times as necessary. Ex: '-h header:value'"
+}
+
+silent=0
+headers=()
+
+while getopts ":h:nm:u:q:" opt; do
+  case "$opt" in
+    \?)
+      exitstatus=0
+      if [[ $OPTARG != '?' ]]; then
+        echo unknown option "'$OPTARG'" 
+        exitstatus=1
+      fi 
+      show_help
+      exit $exitstatus
+      ;;
+    :)
+      exitstatus=0
+      if [[ $OPTARG != 'h' ]]; then
+        echo "'$OPTARG'" requires an argument
+        exitstatus=1
+      fi 
+      show_help
+      exit $exitstatus
+      ;;
+    h)
+      # list of headers
+      headers+=("$OPTARG")
+      ;;
+    n)
+      silent=1
+      ;;
+    m)
+      method=$OPTARG
+      ;;
+    u)
+      url=$OPTARG
+      ;;
+    q)
+      query=$OPTARG
+      ;;
+    p)
+      payload=$OPTARG
+      ;;
+  esac
+done
+
+if [[ $silent -eq 0 ]]; then
+  if [ -z ${method+x} ]; then
+    read -p "HTTP Method [GET]" method
+    method=${method:-GET}
+  fi
+  if [ -z ${url+x} ]; then
+    read -p "URL [/]" url
+    url=${url:-'/'}
+  fi
+  if [ -z ${query+x} ]; then
+    read -p "Query string []" query
+    query=${query:-""}
+  fi
+  if [ ${#headers[@]} -eq 0 ]; then
+    read -p "Header (ex 'foo:bar'). Blank value to continue:" header
+    while [[ $header != "" ]]; do
+      headers+=($header)
+      read -p "Header (ex 'foo:bar'). Blank value to continue:" header
+    done
+  fi
+  if [ -z ${payload+x} ]; then
+    read -p "Payload []" payload
+    payload=${payload:-""}
+  fi
+fi
+echo $method
+echo $url
+echo $query
+for header in ${headers[@]}; do
+  echo $header
+done
+shasum=($(echo -n $payload | sha256sum))
+IFS=':'
+for header in ${headers[@]}; do
+  echo -n $header';'
+done
+if [ ${#headers[@]} -gt 0 ]; then
+  echo ''
+fi
+echo $shasum 
