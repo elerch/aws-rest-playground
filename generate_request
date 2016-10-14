@@ -90,4 +90,4 @@ done
 if [ ${#headers[@]} -gt 0 ]; then
   echo ''
 fi
-echo $shasum 
+echo -n $shasum 
