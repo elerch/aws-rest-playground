@@ -1,0 +1,6 @@
+#!/bin/sh
+fgrep -A 2 ${1:-default} $HOME/.aws/config | \
+  tail -n 2                                | \
+  fgrep region                             | \
+  cut -d = -f 2                            | \
+  tr -d ' '
