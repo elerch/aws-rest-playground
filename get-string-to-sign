@@ -1,0 +1,37 @@
+#!/bin/bash
+
+getDefaultRegion=./get-default-region
+getLongDate=./x-amz-date
+generateRequest=./generate_request
+
+function show_help {
+  echo "get-string-to-sign [-h] -s service [-r region] [-d date]"
+}
+while getopts "h?s:r:d:" opt; do
+  case "$opt" in
+  h|\?)
+    show_help
+    exit 0
+    ;;
+  s) service=$OPTARG
+    ;;
+  r) region=$OPTARG
+    ;;
+  d) date=$OPTARG
+    ;;
+  esac
+done
+date=${date:-$(date -I |tr -d '-')}
+region=${region:-$($getDefaultRegion)}
+if [[ -z ${service+x} ]]; then
+  echo 'service name is required'
+fi
+
+# We're going to read stdin so we can pipe from generate_request
+shasum=($(sha256sum <&0)) 
+
+echo AWS4-HMAC-SHA256
+echo $($getLongDate)
+echo $date/$region/$service/aws4_request
+echo -n $shasum
+ 
