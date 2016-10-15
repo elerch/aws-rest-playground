@@ -83,11 +83,15 @@ for header in ${headers[@]}; do
   echo $header
 done
 shasum=($(echo -n $payload | sha256sum))
-IFS=':'
+first=0
 for header in ${headers[@]}; do
-  echo -n $header';'
+  if [[ first -eq 1 ]]; then
+    echo -n ';'
+  fi
+  first=1
+  echo -n $(echo $header | cut -f 1 -d ':')
 done
 if [ ${#headers[@]} -gt 0 ]; then
-  echo ''
+  echo
 fi
 echo -n $shasum 

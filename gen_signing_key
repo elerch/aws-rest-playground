@@ -36,7 +36,7 @@ if [ -z ${service+x} ]; then
 fi
 
 secret=${secret:-$($getCreds |fgrep secret|cut -d '=' -f 2 |tr -d ' ')}
-date=${date:-$(date -I |tr -d '-')}
+date=${date:-$(date -uI |tr -d '-')}
 region=${region:-$($getDefaultRegion)}
 
 # Four-step signing key calculation

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# We are following the sample from this page:
+# http://czak.pl/2015/09/15/s3-rest-api-with-curl.html
+
+serviceName=s3
+
+# Step 1: Generate the request
+req="$(./generate_request \
+  -m GET \
+  -u / \
+  -h host:emil.s3.amazonaws.com \
+  -h 'accept:*/*' \
+  -h user-agent:curl/7.43.0 \
+  -h x-amz-date:$(./x-amz-date)\
+  -n)"
+signedHeaders=$(echo "$req"|tail -n 2 |head -n 1)
+
+# Step 2: Get a string to sign
+stringToSign=$(echo "$req"| ./get-string-to-sign -s $serviceName)
+
+# Step 3: Generate signing key
+signingKey=$(./gen_signing_key -s $serviceName)
+
+# Step 4: Get signature
+signature=$(echo "$stringToSign" | openssl dgst -sha256 \
+        -mac HMAC \
+        -macopt hexkey:$signingKey | cut -d '=' -f 2 | tr -d ' ')
+
+# Step 5: Build Authorization header
+auth="$(echo Authorization: AWS4-HMAC-SHA256\
+ Credential=$(./get-creds |head -n 1 |cut -d '=' -f 2 |tr -d ' ')/\
+$(date -I |tr -d '-')/\
+$(./get-default-region)/\
+$serviceName/\
+aws4_request, SignedHeaders=$signedHeaders,\
+ Signature=$signature)"
+
+curl -v https://emil.s3.amazonaws.com/ \
+     -H "$auth" \
+     -H "x-amz-content-sha256: $signature" \
+     -H "x-amz-date: $(./x-amz-date)"

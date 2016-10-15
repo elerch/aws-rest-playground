@@ -21,7 +21,7 @@ while getopts "h?s:r:d:" opt; do
     ;;
   esac
 done
-date=${date:-$(date -I |tr -d '-')}
+date=${date:-$(date -uI |tr -d '-')}
 region=${region:-$($getDefaultRegion)}
 if [[ -z ${service+x} ]]; then
   echo 'service name is required'
